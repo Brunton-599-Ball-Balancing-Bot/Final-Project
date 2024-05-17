@@ -88,3 +88,45 @@ class System2D():
         its current state. This is used to update control strategies during simulation.
         """
         pass
+
+    def get_observation_space(self):
+        """
+        Returns the observation space of the system as a numpy array.
+
+        The observation space includes the following parameters:
+        - theta_robot: Angle of the robot.
+        - theta_dot_robot: Angular velocity of the robot.
+        - theta_dot_ball: Angular velocity of the ball.
+        - theta_ddot_ball: Angular acceleration of the ball.
+
+        Returns:
+            numpy.ndarray: A numpy array containing the observation space parameters 
+                        [theta_robot, theta_dot_robot, theta_ddot_robot, theta_dot_ball, theta_ddot_ball].
+        
+        Example:
+            >>> obj = YourClass()
+            >>> observation_space = obj.get_observation_space()
+            >>> print(observation_space)
+            [theta_robot_value, theta_dot_robot_value, theta_ddot_robot_value, theta_dot_ball_value, theta_ddot_ball_value]
+        """
+        return np.array[self.theta_robot, self.theta_dot_robot,
+                        self.theta_dot_ball, self.theta_ddot_ball]
+    
+    def get_action_space(self):
+        """
+        Returns the action space of the system as a numpy array.
+
+        The action space is defined as the range of possible actions that can be 
+        taken by the system. In this case, it is a continuous range between -10 and 10.
+
+        Returns:
+            numpy.ndarray: A numpy array containing the lower and upper bounds of 
+                        the action space, i.e., [-10, 10].
+        
+        Example:
+            >>> obj = YourClass()
+            >>> action_space = obj.get_action_space()
+            >>> print(action_space)
+            [-10, 10]
+        """
+        return np.array([-10, 10])
