@@ -1,4 +1,6 @@
 import numpy as np
+import jax
+import jax.numpy as jnp
 
 class System2D():
     def __init__(self, m_ball=1, m_robot=.1, r_ball=1, h_robot=.1, dt=.01):
@@ -36,9 +38,11 @@ class System2D():
 
         This method is typically used after a failed training loop to restart with new conditions.
         """
+        
+        
         pass
 
-    def set_system(self):
+    def set_system(self, theta_robot, theta_dot_robot, theta_ddot_robot, theta_dot_ball, theta_ddot):
         """
         Sets the system to a specified state.
 
@@ -51,16 +55,26 @@ class System2D():
 
         This can be used for testing the system with different initial conditions.
         """
-        pass
+        self.theta_robot = theta_robot
+        self.theta_dot_robot = theta_dot_robot 
+        self.theta_ddot_robot = theta_ddot_robot
+        self.theta_dot_ball = theta_dot_ball
+        self.theta_ddot_robot = theta_ddot
 
-    def step(self):
+    def ode(self):
+        """
+        Continuous time dynamics of ball balancing robot
+        """
+        pass
+        
+    def discrete_step(self, state, control, dt):
         """
         Steps the system forward in time based on the current state.
 
         This method calculates the next state of the system based on its current state
         and any control inputs (not yet implemented).
         """
-        pass
+        return state + dt * self.ode(state, control)
 
     def set_control(self):
         """
