@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.linalg import expm
+import scipy.signal
+import scipy.linalg
 
 class System2D():
     def __init__(self, dt=.01):
@@ -17,6 +18,8 @@ class System2D():
         self.mu_phi = 3.68 # phi viscous damping coefficient (N-m-s/rad)
         self.dt = dt
         self.g = 9.81 #gravitational constant (m/s^2)
+        self.ki = 100 # integration constant
+        self.kp = 1 #Proportional gain constaint
 
         self.theta = 0 # ball angular configuration
         self.phi = 0 # body angle
@@ -26,28 +29,47 @@ class System2D():
         # Larger calculated values to simplify dynamic matrices
         self.gamma_1 = self.I_B + self.I_b + self.m_b * self.r_b ** 2 + self.m_B * self.r_b ** 2 + self.m_B * self.l_com
         self.gamma_2 = self.I_B + self.m_B * self.l_com ** 2
-        self.F = self.gamma_2 + self.m_B * self.r_b * self.l_com
-        self.G = self.gamma_1 + 2 * self.m_B * self.r_b * self.l_com
-        self.H = self.gamma_2 ** 2 - self.gamma_1 * self.gamma_2 + (self.m_B * self.l_com * self.r_b) ** 2
 
+        # Mass matrix M_*
+        M_star = np.array([
+            [self.gamma_1 + 2 * self.m_B * self.l_com, self.gamma_2 + self.m_B * self.l_com],
+            [self.gamma_2 + self.m_B * self.l_com, self.gamma_2]
+        ])
+
+        M_star_inv = np.linalg.inv(M_star)
+
+        matrix_to_multiply = np.array([
+            [-self.m_B * self.g * self.l_com, -self. m_B * self.g * self.l_com, self.mu_theta, 0, 0],
+            [-self.m_B * self.g * self.l_com, -self.ki, -self.m_B * self.g * self.l_cp, -self.kp, self.mu_phi, self.ki]
+        ])
+
+        result_matrix = np.dot(M_star_inv, matrix_to_multiply)
+
+        A = np.array([
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [result_matrix[0, 0], result_matrix[0, 1], result_matrix[0, 2], result_matrix[0, 3], result_matrix[0, 4]],
+            [result_matrix[1, 0], result_matrix[1, 1], result_matrix[1, 2], result_matrix[1, 3], result_matrix[1, 4]],
+            [0, 0, 0, 0, 0]
+        ])
+
+        
         # Continuous time dynamics
-        self.A = np.array([
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
-            [self.m_B**2 * self.l_com**2 * self.g * self.r_b / self.H, self.m_B**2 * self.l_com**2 * self.g * self.r_b / self.H, self.mu_theta * self.gamma_2 / self.H, -self.mu_phi * self.F / self.H],
-            [self.m_B * self.g * self.l_com * (self.F - self.G) / self.H, self.m_B * self.g * self.l_com * (self.F - self.G) / self.H, -self.mu_theta * (self.gamma_2 + self.m_B * self.r_b * self.l_com) / self.H, self.mu_phi * self.G / self.H]
-        ])
-
-        self.B = np.array([
+        B = np.array([
             [0],
             [0],
-            [self.F / self.H],
-            [-self.G / self.H]
+            [result_matrix[0, -1]],
+            [result_matrix[1, -1]],
+            [1]
         ])
+   
         
         # Discretized dynamics
-        self.A_dynamics = expm(self.A * self.dt)
-        self.B_dynamics = np.linalg.inv(self.A) @ (self.A_dynamics - np.eye(self.A.shape[0])) @ self.B
+        sys_cont = scipy.signal.StateSpace(A, B, np.eye(5), np.zeros((5, 1)))
+        sys_disc = sys_cont.to_discrete(dt)
+        
+        self.A_dynamics = sys_disc.A
+        self.B_dynamics = sys_disc.B
 
          
 
