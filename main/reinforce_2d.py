@@ -153,8 +153,6 @@ obs_space_dims = env.get_observation_space.shape[0]
 action_space_dims = env.get_action_space.shape[0]
 rewards_over_seeds = []
 
-############ STOPPED WORKING HERE ############################################
-
 for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
     # set seed
     torch.manual_seed(seed)
@@ -167,7 +165,22 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
 
     for episode in range(total_num_episodes):
         # gymnasium v26 requires users to set seed while resetting the environment
-        obs, info = wrapped_env.reset(seed=seed)
+        env.reset_system_rand(seed=seed)
+        obs, info = (env.get_observation_space, [])
+
+        # set time and max time
+        t = 0
+        t_max = 10 # (seconds)
+
+        # set max theta
+        theta_max = np.pi / 3
+
+        # initialize total_reward
+        total_reward = 0
+
+        # get initial theta
+        theta_prev = obs[0]
+        phi_dot_prev = obs[3]
 
         done = False
         while not done:
@@ -177,19 +190,64 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             # These represent the next observation, the reward from the step,
             # if the episode is terminated, if the episode is truncated and
             # additional info from the step
-            obs, reward, terminated, truncated, info = wrapped_env.step(action)
+            # step
+            env.step(action)
+
+            # update t
+            t += env.dt
+
+            # get obs
+            obs = env.get_observation_space
+            theta = obs[0]
+            theta_dot = obs[1]
+            phi = obs[2]
+            phi_dot = obs[3]
+
+            # calculate reward
+            if np.abs(theta) < np.abs(theta_prev):
+                reward += 1
+            if np.abs(theta) < np.pi / 100:
+                reward += 2
+
+            ## complex rewards to make the ball still while balanced
+            # if np.abs(theta) < np.pi / 100 and np.abs(phi_dot) < np.abs(phi_dot_prev):
+            #     reward += 3
+            # if np.abs(theta) < np.pi / 100 and np.abs(phi_dot) < .01:
+            #     reward += 10
+            # if np.abs(phi_dot) < np.abs(phi_dot_prev):
+            #     reward += 1
+
+            # update terminated (max theta reached)
+            terminated = np.abs(theta) > theta_max
+
+            # update truncated (max time reached)
+            truncated = t >= t_max
+
             agent.rewards.append(reward)
+
+            # update total reward
+            total_reward += reward
+
+            # update theta_prev and phi_dot_prev
+            theta_prev = theta
+            phi_dot_prev = phi_dot
+
+            # reset reward
+            reward = 0
 
             # End the episode when either truncated or terminated is true
             #  - truncated: The episode duration reaches max number of timesteps
             #  - terminated: Any of the state space values is no longer finite.
             done = terminated or truncated
 
-        reward_over_episodes.append(wrapped_env.return_queue[-1])
+        # append total_reward to return_queue
+        env.return_queue.append(total_reward)
+
+        reward_over_episodes.append(env.return_queue[-1])
         agent.update()
 
         if episode % 1000 == 0:
-            avg_reward = int(np.mean(wrapped_env.return_queue))
+            avg_reward = int(np.mean(env.return_queue))
             print("Episode:", episode, "Average Reward:", avg_reward)
 
     rewards_over_seeds.append(reward_over_episodes)

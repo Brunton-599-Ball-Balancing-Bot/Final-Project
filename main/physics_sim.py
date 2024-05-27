@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.signal
 import scipy.linalg
+from collections import deque
 
 class System2D():
     def __init__(self, dt=.01):
@@ -26,6 +27,9 @@ class System2D():
         self.theta_dot = 0 # change in ball angular configuration
         self.phi_dot = 0 # change in body angle
 
+        self.max_queue_size = 100
+        self.return_queue = deque(maxlen=self.max_queue_size)
+
         # Larger calculated values to simplify dynamic matrices
         self.gamma_1 = self.I_B + self.I_b + self.m_b * self.r_b ** 2 + self.m_B * self.r_b ** 2 + self.m_B * self.l_com
         self.gamma_2 = self.I_B + self.m_B * self.l_com ** 2
@@ -40,7 +44,7 @@ class System2D():
 
         matrix_to_multiply = np.array([
             [-self.m_B * self.g * self.l_com, -self. m_B * self.g * self.l_com, self.mu_theta, 0, 0],
-            [-self.m_B * self.g * self.l_com, -self.ki, -self.m_B * self.g * self.l_cp, -self.kp, self.mu_phi, self.ki]
+            [-self.m_B * self.g * self.l_com, -self.ki, -self.m_B * self.g * self.l_com, -self.kp, self.mu_phi, self.ki]
         ])
 
         result_matrix = np.dot(M_star_inv, matrix_to_multiply)
@@ -159,8 +163,8 @@ class System2D():
             >>> print(observation_space)
             [theta_robot_value, theta_dot_robot_value, theta_ddot_robot_value, theta_dot_ball_value, theta_ddot_ball_value]
         """
-        return np.array[self.theta_robot, self.theta_dot_robot,
-                        self.theta_dot_ball, self.theta_ddot_ball]
+        return np.array[self.theta, self.theta_dot,
+                        self.phi, self.phi_dot]
     
     def get_action_space(self):
         """
@@ -179,4 +183,4 @@ class System2D():
             >>> print(action_space)
             [-10, 10]
         """
-        return np.array([-10, 10])
+        return np.array([-100, 100], [-100, 100], [-100, 100], [-100, 100])
