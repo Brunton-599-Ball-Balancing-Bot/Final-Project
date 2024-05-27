@@ -26,6 +26,7 @@ class System2D():
         self.phi = 0 # body angle
         self.theta_dot = 0 # change in ball angular configuration
         self.phi_dot = 0 # change in body angle
+        self.x5 = 0 # added term due to integrator in control system
 
         self.max_queue_size = 100
         self.return_queue = deque(maxlen=self.max_queue_size)
@@ -94,9 +95,10 @@ class System2D():
         self.phi = np.random.uniform(-np.pi, np.pi)
         self.theta_dot = np.random.uniform(-1, 1)
         self.phi_dot = np.random.uniform(-1, 1)
+        self.x5 = 0
 
 
-    def set_system(self, theta, phi, theta_dot, phi_dot):
+    def set_system(self, theta, phi, theta_dot, phi_dot, x5):
         """
         Sets the system to a specified state.
 
@@ -112,6 +114,7 @@ class System2D():
         self.phi = phi
         self.theta_dot = theta_dot
         self.phi_dot = phi_dot
+        self.x5 = x5
 
 
 
@@ -122,10 +125,10 @@ class System2D():
         This method calculates the next state of the system based on its current state
         and any control inputs.
         """
-        x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot])
+        x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
         x_next = self.A_dynamics @ x + self.B_dynamics @ u
 
-        self.theta, self.phi, self.theta_dot, self.phi_dot = x_next
+        self.theta, self.phi, self.theta_dot, self.phi_dot, x5 = x_next
 
 
     
@@ -139,7 +142,7 @@ class System2D():
         This method calculates the control input u based on the current state using
         a state feedback control law u = -Kx.
         """
-        x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot])
+        x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
         u = -K @ x
         return u
 
@@ -164,7 +167,8 @@ class System2D():
             [theta_robot_value, theta_dot_robot_value, theta_ddot_robot_value, theta_dot_ball_value, theta_ddot_ball_value]
         """
         return np.array[self.theta, self.theta_dot,
-                        self.phi, self.phi_dot]
+        self.phi, self.phi_dot,
+        self.x5]
     
     def get_action_space(self):
         """
@@ -183,4 +187,4 @@ class System2D():
             >>> print(action_space)
             [-10, 10]
         """
-        return np.array([-100, 100], [-100, 100], [-100, 100], [-100, 100])
+        return np.array([-100, 100], [-100, 100], [-100, 100], [-100, 100], [-100, 100])
