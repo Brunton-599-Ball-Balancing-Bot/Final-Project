@@ -45,7 +45,7 @@ class System2D():
 
         matrix_to_multiply = np.array([
             [-self.m_B * self.g * self.l_com, -self. m_B * self.g * self.l_com, self.mu_theta, 0, 0],
-            [-self.m_B * self.g * self.l_com, -self.ki, -self.m_B * self.g * self.l_com, -self.kp, self.mu_phi, self.ki]
+            [-self.m_B * self.g * self.l_com -self.ki, -self.m_B * self.g * self.l_com, -self.kp, self.mu_phi, self.ki]
         ])
 
         result_matrix = np.dot(M_star_inv, matrix_to_multiply)
