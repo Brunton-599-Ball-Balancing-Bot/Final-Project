@@ -147,10 +147,10 @@ from physics_sim import System2D
 env = System2D()
 
 total_num_episodes = int(5e3)  # Total number of episodes
-# Observation-space of InvertedPendulum-v4 (4)
-obs_space_dims = env.get_observation_space.shape[0]
-# Action-space of InvertedPendulum-v4 (1)
-action_space_dims = env.get_action_space.shape[0]
+# Observation-space of InvertedPendulum-v4 (5)
+obs_space_dims = len(env.get_observation_space())
+# Action-space of InvertedPendulum-v4 (5)
+action_space_dims = env.get_action_space().shape[0]
 rewards_over_seeds = []
 
 for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
@@ -165,8 +165,8 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
 
     for episode in range(total_num_episodes):
         # gymnasium v26 requires users to set seed while resetting the environment
-        env.reset_system_rand(seed=seed)
-        obs, info = (env.get_observation_space, [])
+        env.reset_system_rand()
+        obs, info = (env.get_observation_space(), [])
 
         # set time and max time
         t = 0
@@ -191,13 +191,19 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             # if the episode is terminated, if the episode is truncated and
             # additional info from the step
             # step
-            env.step(action)
+            obs = env.get_observation_space()
+            print(obs)
+            u = env.set_control(action)
+            env.step(u)
+
+            obs = env.get_observation_space()
+            print(obs)
 
             # update t
             t += env.dt
 
             # get obs
-            obs = env.get_observation_space
+            obs = env.get_observation_space()
             theta = obs[0]
             theta_dot = obs[1]
             phi = obs[2]
