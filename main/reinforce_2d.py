@@ -183,6 +183,10 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
         phi_dot_prev = obs[3]
 
         done = False
+
+        # initialize reward
+        reward = 0
+
         while not done:
             action = agent.sample_action(obs)
 
@@ -192,12 +196,8 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             # additional info from the step
             # step
             obs = env.get_observation_space()
-            print(obs)
             u = env.set_control(action)
             env.step(u)
-
-            obs = env.get_observation_space()
-            print(obs)
 
             # update t
             t += env.dt
@@ -205,15 +205,20 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             # get obs
             obs = env.get_observation_space()
             theta = obs[0]
-            theta_dot = obs[1]
-            phi = obs[2]
+            theta_dot = obs[2]
+            phi = obs[1]
             phi_dot = obs[3]
 
+            # danger!!!!
+            theta = theta + phi
+
             # calculate reward
-            if np.abs(theta) < np.abs(theta_prev):
-                reward += 1
             if np.abs(theta) < np.pi / 100:
                 reward += 2
+            elif np.abs(theta) < np.abs(theta_prev):
+                reward += 1
+            else:
+                reward -= 1
 
             ## complex rewards to make the ball still while balanced
             # if np.abs(theta) < np.pi / 100 and np.abs(phi_dot) < np.abs(phi_dot_prev):

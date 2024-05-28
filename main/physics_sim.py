@@ -49,7 +49,7 @@ class System2D():
         ])
 
         result_matrix = np.dot(M_star_inv, matrix_to_multiply)
-        result_matrix_2 = np.dot(M_star_inv, np.array([0, kp]))
+        result_matrix_2 = np.dot(M_star_inv, np.array([0, self.kp]))
 
         A = np.array([
             [0, 0, 1, 0, 0],
@@ -92,8 +92,8 @@ class System2D():
         This method is typically used after a failed training loop to restart with new conditions.
         """
 
-        self.theta = np.random.uniform(-np.pi, np.pi)
-        self.phi = np.random.uniform(-np.pi, np.pi)
+        self.theta = 0
+        self.phi = np.random.uniform(-np.pi / 4, np.pi / 4)
         self.theta_dot = np.random.uniform(-1, 1)
         self.phi_dot = np.random.uniform(-1, 1)
         self.x5 = 0
@@ -127,7 +127,9 @@ class System2D():
         and any control inputs.
         """
         x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
-        x_next = self.A_dynamics @ x + self.B_dynamics * u
+
+        x_next = self.A_dynamics @ x + self.B_dynamics @ [u]
+
 
         self.theta, self.phi, self.theta_dot, self.phi_dot, x5 = x_next
 
@@ -168,7 +170,7 @@ class System2D():
             >>> print(observation_space)
             [theta_robot_value, theta_dot_robot_value, theta_ddot_robot_value, theta_dot_ball_value, theta_ddot_ball_value]
         """
-        return np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
+        return [self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5]
     
     def get_action_space(self):
         """
