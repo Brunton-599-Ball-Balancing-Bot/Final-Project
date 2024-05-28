@@ -155,6 +155,7 @@ class System2D():
         - theta_dot_robot: Angular velocity of the robot.
         - theta_dot_ball: Angular velocity of the ball.
         - theta_ddot_ball: Angular acceleration of the ball.
+        - x5 integration term.
 
         Returns:
             numpy.ndarray: A numpy array containing the observation space parameters 
@@ -166,9 +167,7 @@ class System2D():
             >>> print(observation_space)
             [theta_robot_value, theta_dot_robot_value, theta_ddot_robot_value, theta_dot_ball_value, theta_ddot_ball_value]
         """
-        return [self.theta, self.theta_dot,
-            self.phi, self.phi_dot,
-            self.x5]
+        return np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
     
     def get_action_space(self):
         """
