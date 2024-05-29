@@ -2,6 +2,7 @@ import numpy as np
 import scipy.signal
 import scipy.linalg
 from collections import deque
+from gym.spaces import Box
 
 class System2D():
     def __init__(self, dt=.01):
@@ -93,9 +94,9 @@ class System2D():
         """
 
         self.theta = 0
-        self.phi = np.random.uniform(-np.pi / 4, np.pi / 4)
-        self.theta_dot = np.random.uniform(-1, 1)
-        self.phi_dot = np.random.uniform(-1, 1)
+        self.phi = np.random.uniform(-np.pi / 10, np.pi / 10)
+        self.theta_dot = 0
+        self.phi_dot = 0
         self.x5 = 0
 
 
@@ -128,7 +129,7 @@ class System2D():
         """
         x = np.array([self.theta, self.phi, self.theta_dot, self.phi_dot, self.x5])
 
-        x_next = self.A_dynamics @ x + self.B_dynamics @ [u]
+        x_next = self.A_dynamics @ x + self.B_dynamics @ u
 
 
         self.theta, self.phi, self.theta_dot, self.phi_dot, x5 = x_next
@@ -189,4 +190,4 @@ class System2D():
             >>> print(action_space)
             [-10, 10]
         """
-        return np.array([[-100, 100], [-100, 100], [-100, 100], [-100, 100], [-100, 100]])
+        return Box(-100.0, 100.0, (1,), float)
