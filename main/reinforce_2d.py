@@ -128,10 +128,21 @@ class REINFORCE:
 
         deltas = torch.tensor(gs)
 
+        # Assuming self.probs and deltas are lists of log probabilities and deltas respectively
         loss = 0
-        # minimize -1 * prob * reward obtained
+
+        # Minimize -1 * prob * reward obtained
         for log_prob, delta in zip(self.probs, deltas):
-            loss += log_prob.mean() * delta * (-1)
+            if isinstance(log_prob, np.ndarray):
+                log_prob = torch.tensor(log_prob, requires_grad=True)
+            if isinstance(delta, np.ndarray):
+                delta = torch.tensor(delta, requires_grad=False)
+                
+            loss += torch.mean(log_prob) * delta * (-1)
+
+        # Ensure loss is a tensor
+        if isinstance(loss, float):
+            loss = torch.tensor(loss, requires_grad=True)
 
         # Update the policy network
         self.optimizer.zero_grad()
@@ -146,14 +157,14 @@ class REINFORCE:
 from physics_sim import System2D
 env = System2D()
 
-total_num_episodes = int(5e3)  # Total number of episodes
+total_num_episodes = int(1e3)  # Total number of episodes
 # Observation-space of InvertedPendulum-v4 (5)
 obs_space_dims = len(env.get_observation_space())
 # Action-space of InvertedPendulum-v4 (5)
 action_space_dims = env.get_action_space().shape[0]
 rewards_over_seeds = []
 
-for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
+for seed in [42]:  # Fibonacci seed/s
     # set seed
     torch.manual_seed(seed)
     random.seed(seed)
@@ -188,16 +199,14 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
         reward = 0
 
         while not done:
+            obs = env.get_observation_space()
             action = agent.sample_action(obs)
-
             # Step return type - `tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]`
             # These represent the next observation, the reward from the step,
             # if the episode is terminated, if the episode is truncated and
             # additional info from the step
             # step
-            obs = env.get_observation_space()
-            u = env.set_control(action)
-            env.step(u)
+            env.step(action)
 
             # update t
             t += env.dt
@@ -212,13 +221,13 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             # danger!!!!
             theta = theta + phi
 
-            # calculate reward
-            if np.abs(theta) < np.pi / 100:
-                reward += 2
-            elif np.abs(theta) < np.abs(theta_prev):
-                reward += 1
-            else:
-                reward -= 1
+            reward = 1.0
+
+            # # calculate reward
+            # if np.abs(theta) < np.pi / 100:
+            #     reward += 2
+            # elif np.abs(theta) < np.abs(theta_prev):
+            #     reward += 1
 
             ## complex rewards to make the ball still while balanced
             # if np.abs(theta) < np.pi / 100 and np.abs(phi_dot) < np.abs(phi_dot_prev):
@@ -262,3 +271,14 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
             print("Episode:", episode, "Average Reward:", avg_reward)
 
     rewards_over_seeds.append(reward_over_episodes)
+
+rewards_to_plot = [
+    [reward[0] if isinstance(reward, (list, tuple)) else reward for reward in rewards]
+    for rewards in rewards_over_seeds]
+df1 = pd.DataFrame(rewards_to_plot).melt()
+df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
+sns.set(style="darkgrid", context="talk", palette="rainbow")
+sns.lineplot(x="episodes", y="reward", data=df1).set(
+    title="REINFORCE for InvertedPendulum-v4"
+)
+plt.show()
