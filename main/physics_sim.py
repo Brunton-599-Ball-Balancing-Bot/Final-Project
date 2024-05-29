@@ -190,4 +190,4 @@ class System2D():
             >>> print(action_space)
             [-10, 10]
         """
-        return Box(-100.0, 100.0, (1,), float)
+        return Box(-10.0, 10.0, (1,), float)
