@@ -30,6 +30,7 @@ class Policy_Network(nn.Module):
 
         hidden_space1 = 16  # Nothing special with 16, feel free to change
         hidden_space2 = 32  # Nothing special with 32, feel free to change
+        hidden_space3 = 32
 
         # Shared Network
         self.shared_net = nn.Sequential(
@@ -82,7 +83,7 @@ class REINFORCE:
         """
 
         # Hyperparameters
-        self.learning_rate = 1e-4  # Learning rate for policy optimization
+        self.learning_rate = 1e-2  # Learning rate for policy optimization
         self.gamma = 0.99  # Discount factor
         self.eps = 1e-6  # small number for mathematical stability
 
@@ -157,7 +158,7 @@ class REINFORCE:
 from physics_sim import System2D
 env = System2D()
 
-total_num_episodes = int(1e3)  # Total number of episodes
+total_num_episodes = int(1e5)  # Total number of episodes
 # Observation-space of InvertedPendulum-v4 (5)
 obs_space_dims = len(env.get_observation_space())
 # Action-space of InvertedPendulum-v4 (5)
@@ -184,7 +185,7 @@ for seed in [42]:  # Fibonacci seed/s
         t_max = 10 # (seconds)
 
         # set max theta
-        theta_max = np.pi / 3
+        theta_max = np.pi / 4
 
         # initialize total_reward
         total_reward = 0
@@ -221,13 +222,13 @@ for seed in [42]:  # Fibonacci seed/s
             # danger!!!!
             theta = theta + phi
 
-            reward = 1.0
+            # reward = 1.0
 
-            # # calculate reward
-            # if np.abs(theta) < np.pi / 100:
-            #     reward += 2
-            # elif np.abs(theta) < np.abs(theta_prev):
-            #     reward += 1
+            # calculate reward
+            if np.abs(theta) < np.pi / 100:
+                reward += 10
+            elif np.abs(theta) < np.abs(theta_prev):
+                reward += 1
 
             ## complex rewards to make the ball still while balanced
             # if np.abs(theta) < np.pi / 100 and np.abs(phi_dot) < np.abs(phi_dot_prev):
@@ -265,6 +266,8 @@ for seed in [42]:  # Fibonacci seed/s
 
         reward_over_episodes.append(env.return_queue[-1])
         agent.update()
+        # for param in agent.net.parameters():
+        #     print(param)
 
         if episode % 1000 == 0:
             avg_reward = int(np.mean(env.return_queue))
