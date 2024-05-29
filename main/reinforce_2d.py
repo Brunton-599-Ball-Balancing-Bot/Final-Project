@@ -158,7 +158,7 @@ class REINFORCE:
 from physics_sim import System2D
 env = System2D()
 
-total_num_episodes = int(1e5)  # Total number of episodes
+total_num_episodes = int(1e4)  # Total number of episodes
 # Observation-space of InvertedPendulum-v4 (5)
 obs_space_dims = len(env.get_observation_space())
 # Action-space of InvertedPendulum-v4 (5)
