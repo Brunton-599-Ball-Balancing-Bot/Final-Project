@@ -158,7 +158,7 @@ class REINFORCE:
 from physics_sim import System2D
 env = System2D()
 
-total_num_episodes = int(1e4)  # Total number of episodes
+total_num_episodes = int(3.5e4)  # Total number of episodes
 # Observation-space of InvertedPendulum-v4 (5)
 obs_space_dims = len(env.get_observation_space())
 # Action-space of InvertedPendulum-v4 (5)
@@ -174,6 +174,10 @@ for seed in [42]:  # Fibonacci seed/s
     # Reinitialize agent every seed
     agent = REINFORCE(obs_space_dims, action_space_dims)
     reward_over_episodes = []
+
+    first = True
+    reached_1000 = False
+    reached_5000 = False
 
     for episode in range(total_num_episodes):
         # gymnasium v26 requires users to set seed while resetting the environment
@@ -198,6 +202,8 @@ for seed in [42]:  # Fibonacci seed/s
 
         # initialize reward
         reward = 0
+        saved = [[],[],[],[]]
+        max_total_reward = 0
 
         while not done:
             obs = env.get_observation_space()
@@ -255,7 +261,10 @@ for seed in [42]:  # Fibonacci seed/s
 
             # reset reward
             reward = 0
-
+            saved[0].append(theta)
+            saved[1].append(phi)
+            saved[2].append(theta_dot)
+            saved[3].append(phi_dot)
             # End the episode when either truncated or terminated is true
             #  - truncated: The episode duration reaches max number of timesteps
             #  - terminated: Any of the state space values is no longer finite.
@@ -263,6 +272,31 @@ for seed in [42]:  # Fibonacci seed/s
 
         # append total_reward to return_queue
         env.return_queue.append(total_reward)
+
+        if total_reward > max_total_reward:
+            max_total_reward = total_reward
+            np.savetxt("best_model_system_states.csv", saved, delimiter=",")
+            torch.save(agent.net.state_dict(), "best_model.pt")
+            torch.save(agent.optimizer.state_dict(), "best_optimizer.pt")
+
+        if first:
+            first = False
+            np.savetxt("first_model_system_states.csv", saved, delimiter=",")
+            torch.save(agent.net.state_dict(), "first_model.pt")
+            torch.save(agent.optimizer.state_dict(), "first_optimizer.pt")
+        
+        if not reached_1000 and total_reward > 1000:
+            reached_1000 = True
+            np.savetxt("thousand_model_system_states.csv", saved, delimiter=",")
+            torch.save(agent.net.state_dict(), "thousand_model.pt")
+            torch.save(agent.optimizer.state_dict(), "thousand_optimizer.pt")
+
+        if not reached_5000 and total_reward > 5000:
+            reached_5000 = True
+            np.savetxt("five_thousand_model_system_states.csv", saved, delimiter=",")
+            torch.save(agent.net.state_dict(), "five_thousand_model.pt")
+            torch.save(agent.optimizer.state_dict(), "five_thousand_optimizer.pt")
+
 
         reward_over_episodes.append(env.return_queue[-1])
         agent.update()
@@ -279,9 +313,9 @@ rewards_to_plot = [
     [reward[0] if isinstance(reward, (list, tuple)) else reward for reward in rewards]
     for rewards in rewards_over_seeds]
 df1 = pd.DataFrame(rewards_to_plot).melt()
-df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
+df1.rename(columns={"variable": "Episodes", "value": "Reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
-sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="REINFORCE for InvertedPendulum-v4"
+sns.lineplot(x="Episodes", y="Reward", data=df1).set(
+    title="Total Reward Obtained by Agent"
 )
 plt.show()
